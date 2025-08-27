@@ -27,7 +27,7 @@ model = AutoModelForCausalLM.from_pretrained(
 )
 
 
-# troubleshooting version incompability 
+# troubleshooting version incompability (for cuda version 12.8)
 
 python -m pip uninstall -y bitsandbytes triton torch torchvision torchaudio
 python -m pip cache purge
@@ -37,6 +37,7 @@ python -m pip install --no-cache-dir --index-url https://download.pytorch.org/wh
 
 python -m pip install --no-cache-dir "triton==3.0.0"
 python -m pip install --no-cache-dir "bitsandbytes==0.43.3"
+
 
 
 

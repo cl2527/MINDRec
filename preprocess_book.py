@@ -26,6 +26,7 @@ for index, row in tqdm(rating.iterrows()):
     user_dict[userid]['Book-Author'].append(row['Book-Author'])
     user_dict[userid]['Year-Of-Publication'].append(row['Year-Of-Publication'])
 
+mx = 0
 new_user_dict = {}
 for key in user_dict.keys():
     mx = max(mx, len(user_dict[key]['ISBN']))
@@ -85,7 +86,7 @@ def generate_csv(user_list, output_csv, output_json):
                 preference_str += preference[i]
             else:
                 preference_str += ", " + preference[i]
-        for i in range(len(unpreference)):
+        for i in range(len(unpreference)): 
             if i == 0:
                 unpreference_str += unpreference[i]
             else:

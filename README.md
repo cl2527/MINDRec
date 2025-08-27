@@ -26,10 +26,17 @@ model = AutoModelForCausalLM.from_pretrained(
     torch_dtype="auto",           
 )
 
-# fixing version incompability
-pip uninstall -y bitsandbytes torch torchvision torchaudio
 
-pip install --index-url https://download.pytorch.org/whl/cu121 \
-  "torch==2.3.1" "torchvision==0.18.1" "torchaudio==2.3.1"
+# troubleshooting version incompability 
 
-pip install --no-cache-dir "bitsandbytes==0.43.3"
+python -m pip uninstall -y bitsandbytes triton torch torchvision torchaudio
+python -m pip cache purge
+
+python -m pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cu121 \
+  "torch==2.4.1" "torchvision==0.19.1" "torchaudio==2.4.1"
+
+python -m pip install --no-cache-dir "triton==3.0.0"
+python -m pip install --no-cache-dir "bitsandbytes==0.43.3"
+
+
+

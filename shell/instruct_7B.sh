@@ -1,9 +1,9 @@
 echo $1, $2
 seed=$2
-output_dir='../results'
+output_dir='/results'
 base_model='baffo32/decapoda-research-llama-7B-hf'
-train_data='../data/train_book.json'
-val_data='../data/valid_book.json'
+train_data='/data/train_book.json'
+val_data='/data/valid_book.json'
 instruction_model='alpaca-lora-7B'
 for lr in 1e-4
 do

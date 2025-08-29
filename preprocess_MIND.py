@@ -14,8 +14,9 @@ for index, row in tqdm(behaviors.iterrows()):
     userid = row['user_id']
     if not user_dict.__contains__(userid):
         user_dict[userid] = {
-            'historys_titles': [],
-            'historys_catagory': [],
+            'history_titles': [],
+            'history_catagory': [],
+            'history_abstract': [],
             'impression_titles': [],
             'impression_labels': [],
         }
@@ -26,8 +27,10 @@ for index, row in tqdm(behaviors.iterrows()):
         news_idx = news_dict[history_news_id]
         news_title = news.iloc[news_idx]['title']
         news_catagory = news.iloc[news_idx]['category']
-        user_dict[userid]['historys_catagory'].append(news_catagory)
-        user_dict[userid]['historys_titles'].append(news_title)
+        news_abstract = news.iloc[news_idx]['abstract']
+        user_dict[userid]['history_catagory'].append(news_catagory)
+        user_dict[userid]['history_titles'].append(news_title)
+        user_dict[userid]['history_abstract'].append(news_abstract)
     if row['impressions'] == 'NULL':
         continue
     impressions = row['impressions'].split(' ')
@@ -35,10 +38,14 @@ for index, row in tqdm(behaviors.iterrows()):
         impression_news_id, label = impression.split('-')
         news_idx = news_dict[impression_news_id]
         news_title = news.iloc[news_idx]['title']
+        news_catagory = news.iloc[news_idx]['category']
+        news_abstract = news.iloc[news_idx]['abstract']
         user_dict[userid]['impression_titles'].append(news_title)
         user_dict[userid]['impression_labels'].append(int(label))
+        user_dict[userid]['impression_catagory'].append(news_catagory)
+        user_dict[userid]['impression_abstract'].append(news_abstract)
+        
     
-
 new_user_dict = {}
 for key in user_dict.keys():
     if len(user_dict[key]['historys'])  <= 5:

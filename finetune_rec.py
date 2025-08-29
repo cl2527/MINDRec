@@ -144,7 +144,7 @@ def train(
         result["labels"] = result["input_ids"].copy()
 
         return result
-
+ 
     def generate_and_tokenize_prompt(data_point):
         full_prompt = generate_prompt(data_point)
         tokenized_full_prompt = tokenize(full_prompt)
@@ -215,7 +215,7 @@ def train(
     val_data = (val_data["train"].map(generate_and_tokenize_prompt))
     if not ddp and torch.cuda.device_count() > 1:
         model.is_parallelizable = True
-        model.model_parallel = True
+        model.model_parallel = True   
 
     def compute_metrics(eval_preds):
         pre, labels = eval_preds
@@ -260,8 +260,8 @@ def train(
             eval_steps=eval_step,
             save_steps=eval_step,
             output_dir=output_dir,
-            save_total_limit=1,
-            load_best_model_at_end=True,
+            save_total_limit=3,
+            load_best_model_at_end=False,
             metric_for_best_model="eval_auc",
             ddp_find_unused_parameters=False if ddp else None,
             group_by_length=group_by_length,

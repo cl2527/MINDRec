@@ -14,9 +14,13 @@ for index, row in tqdm(behaviors.iterrows()):
     userid = row['user_id']
     if not user_dict.__contains__(userid):
         user_dict[userid] = {
+            'history_news_id': [],
             'history_titles': [],
             'history_catagory': [],
             'history_abstract': [],
+            'impression_news_id': [],
+            'impression_catagory': [],
+            'impression_abstract': [],
             'impression_titles': [],
             'impression_labels': [],
         }
@@ -28,6 +32,7 @@ for index, row in tqdm(behaviors.iterrows()):
         news_title = news.iloc[news_idx]['title']
         news_catagory = news.iloc[news_idx]['category']
         news_abstract = news.iloc[news_idx]['abstract']
+        user_dict[userid]['history_news_id'].append(news_idx)
         user_dict[userid]['history_catagory'].append(news_catagory)
         user_dict[userid]['history_titles'].append(news_title)
         user_dict[userid]['history_abstract'].append(news_abstract)
@@ -40,6 +45,7 @@ for index, row in tqdm(behaviors.iterrows()):
         news_title = news.iloc[news_idx]['title']
         news_catagory = news.iloc[news_idx]['category']
         news_abstract = news.iloc[news_idx]['abstract']
+        user_dict[userid]['impression_news_id'].append(news_idx)
         user_dict[userid]['impression_titles'].append(news_title)
         user_dict[userid]['impression_labels'].append(int(label))
         user_dict[userid]['impression_catagory'].append(news_catagory)

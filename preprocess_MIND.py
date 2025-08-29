@@ -14,15 +14,15 @@ for index, row in tqdm(behaviors.iterrows()):
     userid = row['user_id']
     if not user_dict.__contains__(userid):
         user_dict[userid] = {
-            'history': [],
+            'historys': [],
             'impressions': [],
             'impression_labels': [],
         }
-    histories = row['history'].split(' ')
+    histories = row['historys'].split(' ')
     for history_news_id in histories:
         news_idx = news_dict[history_news_id]
         news_title = news.iloc[news_idx]['title']
-        user_dict[userid]['history'].append(news_title)
+        user_dict[userid]['historys'].append(news_title)
     impressions = row['impressions'].split(' ')
     for impression in impressions:
         impression_news_id, label = impression.split('-')
@@ -31,5 +31,13 @@ for index, row in tqdm(behaviors.iterrows()):
         user_dict[userid]['impressions'].append(news_title)
         user_dict[userid]['impression_labels'].append(int(label))
     
-    
-    
+
+new_user_dict = {}
+for key in user_dict.keys():
+    if len(user_dict[key]['historys'])  <= 5:
+        pass
+    else:
+        new_user_dict[key] = user_dict[key]
+
+import random
+import json

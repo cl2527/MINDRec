@@ -16,10 +16,10 @@ for index, row in tqdm(behaviors.iterrows()):
         user_dict[userid] = {
             'history_news_ids': [],
             'history_titles': [],
-            'history_catagorys': [],
+            'history_catagories': [],
             'history_abstracts': [],
             'impression_news_ids': [],
-            'impression_catagorys': [],
+            'impression_catagories': [],
             'impression_abstracts': [],
             'impression_titles': [],
             'impression_labels': [],
@@ -33,7 +33,7 @@ for index, row in tqdm(behaviors.iterrows()):
         news_catagory = news.iloc[news_idx]['category']
         news_abstract = news.iloc[news_idx]['abstract']
         user_dict[userid]['history_news_ids'].append(news_idx)
-        user_dict[userid]['history_catagorys'].append(news_catagory)
+        user_dict[userid]['history_catagories'].append(news_catagory)
         user_dict[userid]['history_titles'].append(news_title)
         user_dict[userid]['history_abstracts'].append(news_abstract)
     if row['impressions'] == 'NULL':
@@ -48,7 +48,7 @@ for index, row in tqdm(behaviors.iterrows()):
         user_dict[userid]['impression_news_ids'].append(news_idx)
         user_dict[userid]['impression_titles'].append(news_title)
         user_dict[userid]['impression_labels'].append(int(label))
-        user_dict[userid]['impression_catagorys'].append(news_catagory)
+        user_dict[userid]['impression_catagories'].append(news_catagory)
         user_dict[userid]['impression_abstracts'].append(news_abstract)
         
     
@@ -73,10 +73,10 @@ def generate_json(user_list, output_json):
     for user in user_list:
         history_news_ids = user_dict[user]['history_news_ids']
         history_titles = user_dict[user]['history_titles']
-        history_catagorys = user_dict[user]['history_catagorys']
+        history_catagories = user_dict[user]['history_catagories']
         history_abstracts = user_dict[user]['history_abstracts']
         impression_news_ids = user_dict[user]['impression_news_ids']
-        impression_catagorys = user_dict[user]['impression_catagorys']
+        impression_catagories = user_dict[user]['impression_catagories']
         impression_abstracts = user_dict[user]['impression_abstracts']
         impression_titles = user_dict[user]['impression_titles']
         impression_labels = user_dict[user]['impression_labels']
@@ -87,11 +87,11 @@ def generate_json(user_list, output_json):
         random.seed(42)
         random.shuffle(history_titles)
         random.seed(42)
-        random.shuffle(history_catagorys)
+        random.shuffle(history_catagories)
         random.seed(42)
         random.shuffle(impression_news_ids)
         random.seed(42)
-        random.shuffle(impression_catagorys)
+        random.shuffle(impression_catagories)
         random.seed(42)
         random.shuffle(impression_titles)
         random.seed(42)
@@ -101,7 +101,7 @@ def generate_json(user_list, output_json):
         
         history_list = []
         for i in range(min(len(history_news_ids), 10)):
-            history_list.append("\"" + history_news_ids[i] + "\"" + " in catagory " + history_catagorys[i])
+            history_list.append("\"" + history_news_ids[i] + "\"" + " in catagory " + history_catagories[i])
 
         history_str = ''
         for i in range(min(len(history_list),10)):
@@ -112,10 +112,11 @@ def generate_json(user_list, output_json):
         
         for i in range(min(len(impression_news_ids), 10)):
  
-            target_preference_str = "Yes." if impression_labels[-1] == 1 else "No."
-            target_news_str = "\"" + impression_titles[-1] + "\"" + " in catagory " + impression_catagorys[-1]
+            target_preference_str = "Yes." if impression_labels[i] == 1 else "No."
+            target_news_str = "\"" + impression_titles[i] + "\"" + " in catagory " + impression_catagories[i]
             Prompt_json.append({
-                "instruction": "Given the user's news click history, identify whether the user will click the target news by answering \"Yes.\" or \"No.\".",
-                "input": f"User History: {history_str}\nWhether the user will like the target news {target_news_str}?",
+                "instruction": "Given the user's history, identify whether the user will click the target news by answering \"Yes.\" or \"No.\".",
+                "input": f"User History: {history_str}\nWhether the user will click the target news {target_news_str}?",
                 "output": target_preference_str,
             })
+            

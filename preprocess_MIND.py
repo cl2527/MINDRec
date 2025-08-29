@@ -14,13 +14,13 @@ for index, row in tqdm(behaviors.iterrows()):
     userid = row['user_id']
     if not user_dict.__contains__(userid):
         user_dict[userid] = {
-            'history_news_id': [],
+            'history_news_ids': [],
             'history_titles': [],
-            'history_catagory': [],
-            'history_abstract': [],
-            'impression_news_id': [],
-            'impression_catagory': [],
-            'impression_abstract': [],
+            'history_catagorys': [],
+            'history_abstracts': [],
+            'impression_news_ids': [],
+            'impression_catagorys': [],
+            'impression_abstracts': [],
             'impression_titles': [],
             'impression_labels': [],
         }
@@ -32,10 +32,10 @@ for index, row in tqdm(behaviors.iterrows()):
         news_title = news.iloc[news_idx]['title']
         news_catagory = news.iloc[news_idx]['category']
         news_abstract = news.iloc[news_idx]['abstract']
-        user_dict[userid]['history_news_id'].append(news_idx)
-        user_dict[userid]['history_catagory'].append(news_catagory)
+        user_dict[userid]['history_news_ids'].append(news_idx)
+        user_dict[userid]['history_catagorys'].append(news_catagory)
         user_dict[userid]['history_titles'].append(news_title)
-        user_dict[userid]['history_abstract'].append(news_abstract)
+        user_dict[userid]['history_abstracts'].append(news_abstract)
     if row['impressions'] == 'NULL':
         continue
     impressions = row['impressions'].split(' ')
@@ -45,11 +45,11 @@ for index, row in tqdm(behaviors.iterrows()):
         news_title = news.iloc[news_idx]['title']
         news_catagory = news.iloc[news_idx]['category']
         news_abstract = news.iloc[news_idx]['abstract']
-        user_dict[userid]['impression_news_id'].append(news_idx)
+        user_dict[userid]['impression_news_ids'].append(news_idx)
         user_dict[userid]['impression_titles'].append(news_title)
         user_dict[userid]['impression_labels'].append(int(label))
-        user_dict[userid]['impression_catagory'].append(news_catagory)
-        user_dict[userid]['impression_abstract'].append(news_abstract)
+        user_dict[userid]['impression_catagorys'].append(news_catagory)
+        user_dict[userid]['impression_abstracts'].append(news_abstract)
         
     
 new_user_dict = {}
@@ -69,4 +69,14 @@ valid_usser = user_list[int(len(user_list) * 0.8):int(len(user_list) * 0.9)]
 test_user = user_list[int(len(user_list) * 0.9):]
 
 def generate_json(user_list, output_json):
-    
+
+    for user in user_list:
+        impression_news_id = user_dict[user]['impression_news_id']
+        impression_labels = user_dict[user]['impression_labels']
+        history_news_id = user_dict[user]['history_news_id']
+        history_titles = user_dict[user]['history_titles']
+        history_catagory = user_dict[user]['history_catagory']
+        history_abstract = user_dict[user]['history_abstract']
+        impression_titles = user_dict[user]['impression_titles']
+        impression_catagory = user_dict[user]['impression_catagory']
+        impression_abstract = user_dict[user]['impression_abstract']

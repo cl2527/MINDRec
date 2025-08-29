@@ -81,7 +81,6 @@ def generate_json(user_list, output_json):
         impression_titles = user_dict[user]['impression_titles']
         impression_labels = user_dict[user]['impression_labels']
 
-        
         random.seed(42)
         random.shuffle(history_news_ids)
         random.seed(42)
@@ -96,8 +95,6 @@ def generate_json(user_list, output_json):
         random.shuffle(impression_titles)
         random.seed(42)
         random.shuffle(impression_labels)
-        
-        
         
         history_list = []
         for i in range(min(len(history_news_ids), 10)):

@@ -172,7 +172,6 @@ def train(
     )
     model = get_peft_model(model, config)
 
-    
 
     if train_data_path.endswith(".json"):  # todo: support jsonl
         train_data = load_dataset("json", data_files=train_data_path)

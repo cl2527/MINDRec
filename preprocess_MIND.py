@@ -18,11 +18,15 @@ for index, row in tqdm(behaviors.iterrows()):
             'impressions': [],
             'impression_labels': [],
         }
-    histories = row['historys'].split(' ')
+    if row['history'] == 'NULL':
+        continue
+    histories = row['history'].split(' ')
     for history_news_id in histories:
         news_idx = news_dict[history_news_id]
         news_title = news.iloc[news_idx]['title']
         user_dict[userid]['historys'].append(news_title)
+    if row['impressions'] == 'NULL':
+        continue
     impressions = row['impressions'].split(' ')
     for impression in impressions:
         impression_news_id, label = impression.split('-')
@@ -38,6 +42,7 @@ for key in user_dict.keys():
         pass
     else:
         new_user_dict[key] = user_dict[key]
+        print(user_dict[key])
 
-import random
-import json
+
+#

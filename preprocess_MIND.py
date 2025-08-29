@@ -119,4 +119,9 @@ def generate_json(user_list, output_json):
                 "input": f"User History: {history_str}\nWhether the user will click the target news {target_news_str}?",
                 "output": target_preference_str,
             })
-            
+    with open(output_json, 'w') as f:
+        json.dump(Prompt_json, f, indent=4)
+
+generate_json(train_user, './data/MIND/train.json')
+generate_json(valid_usser, './data/MIND/valid.json')
+generate_json(test_user, './data/MIND/test.json')

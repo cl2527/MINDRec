@@ -71,12 +71,14 @@ test_user = user_list[int(len(user_list) * 0.9):]
 def generate_json(user_list, output_json):
 
     for user in user_list:
-        impression_news_id = user_dict[user]['impression_news_id']
-        impression_labels = user_dict[user]['impression_labels']
-        history_news_id = user_dict[user]['history_news_id']
+        history_news_ids = user_dict[user]['history_news_ids']
         history_titles = user_dict[user]['history_titles']
-        history_catagory = user_dict[user]['history_catagory']
-        history_abstract = user_dict[user]['history_abstract']
+        history_catagorys = user_dict[user]['history_catagorys']
+        history_abstracts = user_dict[user]['history_abstracts']
+        impression_news_ids = user_dict[user]['impression_news_ids']
+        impression_catagorys = user_dict[user]['impression_catagorys']
+        impression_abstracts = user_dict[user]['impression_abstracts']
         impression_titles = user_dict[user]['impression_titles']
-        impression_catagory = user_dict[user]['impression_catagory']
-        impression_abstract = user_dict[user]['impression_abstract']
+        impression_labels = user_dict[user]['impression_labels']
+        
+

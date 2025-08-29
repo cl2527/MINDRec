@@ -14,8 +14,9 @@ for index, row in tqdm(behaviors.iterrows()):
     userid = row['user_id']
     if not user_dict.__contains__(userid):
         user_dict[userid] = {
-            'historys': [],
-            'impressions': [],
+            'historys_titles': [],
+            'historys_catagory': [],
+            'impression_titles': [],
             'impression_labels': [],
         }
     if row['history'] == 'NULL':
@@ -24,7 +25,9 @@ for index, row in tqdm(behaviors.iterrows()):
     for history_news_id in histories:
         news_idx = news_dict[history_news_id]
         news_title = news.iloc[news_idx]['title']
-        user_dict[userid]['historys'].append(news_title)
+        news_catagory = news.iloc[news_idx]['category']
+        user_dict[userid]['historys_catagory'].append(news_catagory)
+        user_dict[userid]['historys_titles'].append(news_title)
     if row['impressions'] == 'NULL':
         continue
     impressions = row['impressions'].split(' ')
@@ -32,7 +35,7 @@ for index, row in tqdm(behaviors.iterrows()):
         impression_news_id, label = impression.split('-')
         news_idx = news_dict[impression_news_id]
         news_title = news.iloc[news_idx]['title']
-        user_dict[userid]['impressions'].append(news_title)
+        user_dict[userid]['impression_titles'].append(news_title)
         user_dict[userid]['impression_labels'].append(int(label))
     
 
@@ -52,3 +55,5 @@ train_user = user_list[:int(len(user_list) * 0.8)]
 valid_usser = user_list[int(len(user_list) * 0.8):int(len(user_list) * 0.9)]
 test_user = user_list[int(len(user_list) * 0.9):]
 
+def generate_json(user_list, output_json):
+    

@@ -110,4 +110,12 @@ def generate_json(user_list, output_json):
             else:
                 history_str += ", " + history_list[i]
         
-        for i in range(
+        for i in range(min(len(impression_news_ids), 10)):
+ 
+            target_preference_str = "Yes." if impression_labels[-1] == 1 else "No."
+            target_news_str = "\"" + impression_titles[-1] + "\"" + " in catagory " + impression_catagorys[-1]
+            Prompt_json.append({
+                "instruction": "Given the user's news click history, identify whether the user will click the target news by answering \"Yes.\" or \"No.\".",
+                "input": f"User History: {history_str}\nWhether the user will like the target news {target_news_str}?",
+                "output": target_preference_str,
+            })

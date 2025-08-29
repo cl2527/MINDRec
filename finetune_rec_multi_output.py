@@ -230,84 +230,102 @@ def train(
         return logits[:, 1][2::3], gold[2::3]
     """
     
-    # --- constants (edit these) ---
-    YES_ID = 8241         # token id for "Yes"
-    NO_ID  = 3782         # token id for "No"
-    N_OUTPUT = 64         # how many final tokens per sequence are Yes/No
-    K = 5                 # recall@K
+    # IDs and k
+    YES_ID = 8241
+    NO_ID  = 3782
+    K = 5
 
-
+    import torch
+    import numpy as np
 
     def preprocess_logits_for_metrics(logits, labels):
         """
-        Return two flat arrays:
-        - probs_yes_flat: P(YES_ID) for the last N_OUTPUT label positions (aligned with t-1 logits)
-        - gold_yes_flat : 1 if label==YES_ID at those positions else 0
-        Shapes are flattened across batch so compute_metrics can reshape to [B, N_OUTPUT].
+        Find all positions where labels are YES/NO using argwhere.
+        Align to causal LM (use logits at t-1), extract P(YES) for each such position,
+        and return flat arrays so Trainer can concat across steps.
+
+        Returns (as "predictions" for compute_metrics):
+        probs_yes_flat: float32 [N]   - P(YES_ID) at each matched position
+        gold_yes_flat : int32   [N]   - 1 if label==YES_ID else 0
+        batch_idx_flat: int32   [N]   - which batch item each element belongs to
         """
         with torch.no_grad():
+            # logits: [B, T, V], labels: [B, T]
             B, T, V = logits.shape
             device = logits.device
 
-            # positions of the last N_OUTPUT labels
-            t_start = max(0, T - N_OUTPUT)
-            label_pos = torch.arange(t_start, T, device=device)          # [M], M<=N_OUTPUT
-            pred_pos  = label_pos - 1                                    # align to predicting logits
-            keep = pred_pos >= 0                                         # drop invalid -1 at sequence start
-            if not torch.all(keep):
-                label_pos = label_pos[keep]
-                pred_pos  = pred_pos[keep]
+            # indices of all YES/NO labels -> [N, 2] with columns [batch_idx, time_idx]
+            idx = torch.argwhere((labels == YES_ID) | (labels == NO_ID))
+            if idx.numel() == 0:
+                # nothing to score
+                empty = np.empty((0,), dtype=np.float32)
+                empty_i = np.empty((0,), dtype=np.int32)
+                return (empty, empty_i, empty_i)
 
-            # select raw logits at predicting positions -> [B, M, V], then take YES/NO cols and softmax -> [B, M, 2]
-            sel = logits[:, pred_pos, :]                                  # [B, M, V]
-            two = sel.index_select(-1, torch.tensor([NO_ID, YES_ID], device=device))  # [B, M, 2]
-            probs_yes = two.softmax(dim=-1)[..., 1]                       # [B, M]
+            b = idx[:, 0]
+            t = idx[:, 1]
 
-            # gold labels at the label positions -> [B, M] in {0,1}
-            gold_yes = (labels[:, label_pos] == YES_ID).to(torch.int32)
+            # gold: 1 if YES, 0 if NO
+            gold = (labels[b, t] == YES_ID).to(torch.int32)
 
-            # flatten (Trainer will concat across eval steps)
+            # align to predicting logits at t-1; drop positions where t==0
+            keep = t > 0
+            b = b[keep]
+            t = t[keep]
+            gold = gold[keep]
+            if b.numel() == 0:
+                empty = np.empty((0,), dtype=np.float32)
+                empty_i = np.empty((0,), dtype=np.int32)
+                return (empty, empty_i, empty_i)
+
+            # select raw logits at [b, t-1] -> [N, V]
+            sel = logits[b, t - 1, :]  # raw (pre-softmax)
+
+            # take the two target vocab columns and softmax once -> [N, 2]
+            cols = torch.tensor([NO_ID, YES_ID], device=sel.device)
+            two = sel.index_select(dim=1, index=cols)
+            probs_yes = two.softmax(dim=1)[:, 1]  # P(YES_ID) -> [N]
+
+            # flatten to numpy for Trainer concatenation
             return (
-                probs_yes.reshape(-1).cpu().numpy(),
-                gold_yes.reshape(-1).cpu().numpy(),
+                probs_yes.detach().cpu().numpy().astype(np.float32),
+                gold.detach().cpu().numpy().astype(np.int32),
+                b.detach().cpu().numpy().astype(np.int32),   # batch index per element
             )
 
 
     def compute_metrics(eval_preds):
         """
-        Expect eval_preds[0] == (probs_yes_flat, gold_yes_flat) from preprocess_logits_for_metrics.
-        Compute mean recall@K across sequences that have at least one positive.
+        eval_preds[0] is the tuple returned above (probs_yes_flat, gold_yes_flat, batch_idx_flat).
+        Compute mean recall@5 across sequences that contain at least one positive.
         """
-        (probs_yes_flat, gold_yes_flat), _label_ids_unused = eval_preds
+        (probs_flat, gold_flat, batch_idx_flat), _ = eval_preds
 
-        probs = np.asarray(probs_yes_flat)
-        gold  = np.asarray(gold_yes_flat).astype(int)
+        if len(probs_flat) == 0:
+            return {"recall@5": 0.0}
 
-        # reshape back to [B, N] (N may be <= N_OUTPUT if we dropped the first column due to t-1)
-        # infer N from total length; assume it's consistent across the batch
-        # If you know it's exactly N_OUTPUT, just use N_OUTPUT.
-        total = len(probs)
-        # guard: if total is not divisible by N_OUTPUT, infer per-batch length from labels
-        N = N_OUTPUT if total % N_OUTPUT == 0 else (total // (total // N_OUTPUT))
-        B = total // N
+        probs = np.asarray(probs_flat, dtype=np.float32)
+        gold  = np.asarray(gold_flat,  dtype=np.int32)
+        bidx  = np.asarray(batch_idx_flat, dtype=np.int32)
 
-        probs = probs.reshape(B, N)
-        gold  = gold.reshape(B, N)
-
-        k = min(K, N)
         recalls = []
-        for s, g in zip(probs, gold):
-            pos_idx = np.flatnonzero(g == 1)
-            if pos_idx.size == 0:
+        for b in np.unique(bidx):
+            mask = (bidx == b)
+            s = probs[mask]
+            g = gold[mask]
+
+            pos = np.flatnonzero(g == 1)
+            if pos.size == 0:
                 continue  # skip sequences with no positives
-            # top-k indices by score
-            topk_idx = np.argpartition(-s, k-1)[:k]
-            hits = np.intersect1d(topk_idx, pos_idx, assume_unique=False).size
-            recalls.append(hits / pos_idx.size)
+
+            k = min(K, s.size)
+            # top-k indices by score (unordered but good for membership)
+            topk_idx = np.argpartition(-s, k - 1)[:k]
+            hits = np.intersect1d(topk_idx, pos).size
+            recalls.append(hits / pos.size)
 
         return {"recall@5": float(np.mean(recalls)) if recalls else 0.0}
 
-    
     
     os.environ["WANDB_DISABLED"] = "true"
     

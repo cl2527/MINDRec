@@ -69,7 +69,7 @@ valid_usser = user_list[int(len(user_list) * 0.8):int(len(user_list) * 0.9)]
 test_user = user_list[int(len(user_list) * 0.9):]
 
 def generate_json(user_list, output_json):
-
+    Prompt_json = []
     for user in user_list:
         history_news_ids = user_dict[user]['history_news_ids']
         history_titles = user_dict[user]['history_titles']
@@ -101,6 +101,13 @@ def generate_json(user_list, output_json):
         
         history_list = []
         for i in range(min(len(history_news_ids), 10)):
-            history_list.append("\"" + history_news_ids[i] + "\"" + " written by " + history_catagorys[i])
+            history_list.append("\"" + history_news_ids[i] + "\"" + " in catagory " + history_catagorys[i])
 
         history_str = ''
+        for i in range(min(len(history_list),10)):
+            if i == 0:
+                history_str += history_list[i]
+            else:
+                history_str += ", " + history_list[i]
+        
+        for i in range(

@@ -99,8 +99,8 @@ def generate_json(user_list, output_json):
         
         
         
-        
-        historys = []
+        history_list = []
+        for i in range(min(len(history_news_ids), 10)):
+            history_list.append("\"" + history_news_ids[i] + "\"" + " written by " + history_catagorys[i])
 
-        
-        
+        history_str = ''

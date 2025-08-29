@@ -16,10 +16,20 @@ for index, row in tqdm(behaviors.iterrows()):
         user_dict[userid] = {
             'history': [],
             'impressions': [],
-            'labels': [],
+            'impression_labels': [],
         }
     histories = row['history'].split(' ')
-    for history in histories:
-        
+    for history_news_id in histories:
+        news_idx = news_dict[history_news_id]
+        news_title = news.iloc[news_idx]['title']
+        user_dict[userid]['history'].append(news_title)
+    impressions = row['impressions'].split(' ')
+    for impression in impressions:
+        impression_news_id, label = impression.split('-')
+        news_idx = news_dict[impression_news_id]
+        news_title = news.iloc[news_idx]['title']
+        user_dict[userid]['impressions'].append(news_title)
+        user_dict[userid]['impression_labels'].append(int(label))
+    
     
     

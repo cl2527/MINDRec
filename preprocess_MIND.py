@@ -44,5 +44,11 @@ for key in user_dict.keys():
         new_user_dict[key] = user_dict[key]
         print(user_dict[key])
 
+import random
+import json
+user_list = list(new_user_dict.keys())
+random.shuffle(user_list)
+train_user = user_list[:int(len(user_list) * 0.8)]
+valid_usser = user_list[int(len(user_list) * 0.8):int(len(user_list) * 0.9)]
+test_user = user_list[int(len(user_list) * 0.9):]
 
-#

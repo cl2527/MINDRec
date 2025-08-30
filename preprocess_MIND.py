@@ -83,7 +83,7 @@ import json
 total_users = len(new_user_dict)
 print('total users:', total_users)
 used_users = int(total_users / user_alpha)
-print('used users:', used_users)]
+print('used users:', used_users)
 
 user_list = list(new_user_dict.keys())
 random.shuffle(user_list)

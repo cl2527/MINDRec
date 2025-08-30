@@ -2,6 +2,19 @@ import pandas as pd
 behaviors = pd.read_csv('./raw_data/mind/MINDsmall_train/behaviors.tsv', sep='\t', header=None, names=['impression_id', 'user_id', 'time', 'history', 'impressions'])
 news = pd.read_csv('./raw_data/mind/MINDsmall_train/news.tsv', sep='\t', header=None, names=['news_id', 'category', 'subcategory', 'title', 'abstract', 'url', 'title_entities', 'abstract_entities'])
 
+
+train_alpha = 5 # train set negative samples undersampling rate
+valid_alpha = 1 # valid set negative samples undersampling rate
+test_alpha = 1 # test set negative samples undersampling rate
+
+tgt_fld_name = 'train_'+str(train_alpha)+'_val_'+str(valid_alpha)+'_test_'+str(test_alpha)
+tgt_folder_full = './data/MIND/' + tgt_fld_name + '/'
+
+tgt_train_json = tgt_folder_full + 'train.json'
+tgt_valid_json = tgt_folder_full + 'valid.json'
+tgt_test_json = tgt_folder_full + 'test.json'
+
+
 news_dict = {}
 
 from tqdm import tqdm
@@ -69,9 +82,7 @@ train_user = user_list[:int(len(user_list) * 0.8)]
 valid_usser = user_list[int(len(user_list) * 0.8):int(len(user_list) * 0.9)]
 test_user = user_list[int(len(user_list) * 0.9):]
 
-train_alpha = 5 # train set negative samples undersampling rate
-valid_alpha = 1 # valid set negative samples undersampling rate
-test_alpha = 1 # test set negative samples undersampling rate
+
 
 def generate_json(user_list, output_json, split = 'train'):
     Prompt_json = []

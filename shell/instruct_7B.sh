@@ -1,9 +1,9 @@
 echo $1, $2
 seed=$2
-output_dir='results_book'
+output_dir='results/MIND'
 base_model='baffo32/decapoda-research-llama-7B-hf'
-train_data='data/book/train.json'
-val_data='data/book/valid.json'
+train_data='data/MIND/tra_NU20_val_NU20_te_NU20_User_2500/train.json'
+val_data='data/MIND/tra_NU20_val_NU20_te_NU20_User_2500/valid.json'
 instruction_model=XXX
 for lr in 1e-4
 do
@@ -17,7 +17,7 @@ do
                     --base_model $base_model \
                     --train_data_path $train_data \
                     --val_data_path $val_data \
-                    --output_dir ${output_dir}_${seed}_${sample} \
+                    --output_dir ${output_dir}_${seed}_${sample}_${lr}\
                     --batch_size 128 \
                     --micro_batch_size 32 \
                     --num_epochs 200 \

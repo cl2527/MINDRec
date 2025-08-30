@@ -8,13 +8,13 @@ val_alpha = 20 # valid set negative samples undersampling rate
 test_alpha = 20 # test set negative samples undersampling rate
 
 
-user_alpha = 10 # user undersampling rate
+user_alpha = 20 # user undersampling rate
 
 real_total_users = len(behaviors['user_id'].unique())
 
 
 tgt_fld_name = 'tra_NU'+str(train_alpha)+'_val_NU'+str(val_alpha)+'_te_NU'+str(test_alpha)+'_User_'+str(real_total_users//user_alpha)
-tgt_folder_full = './data/MIND/' + tgt_fld_name + '/'
+tgt_folder_full = './data/MIND_20/' + tgt_fld_name + '/'
 
 tgt_train_json = tgt_folder_full + 'train.json'
 tgt_valid_json = tgt_folder_full + 'valid.json'
@@ -126,27 +126,25 @@ def generate_json(user_list, output_json, split = 'train'):
         impression_titles = user_dict[user]['impression_titles']
         impression_labels = user_dict[user]['impression_labels']
 
-        random.seed(42)
-        random.shuffle(history_news_ids)
-        random.seed(42)
-        random.shuffle(history_titles)
-        random.seed(42)
-        random.shuffle(history_catagories)
-        random.seed(42)
-        random.shuffle(impression_news_ids)
-        random.seed(42)
-        random.shuffle(impression_catagories)
-        random.seed(42)
-        random.shuffle(impression_titles)
-        random.seed(42)
-        random.shuffle(impression_labels)
+        rng = random.Random(42)
+
+        # History
+        hist = list(zip(history_news_ids, history_titles, history_catagories, history_abstracts))
+        rng.shuffle(hist)
+        history_news_ids, history_titles, history_catagories, history_abstracts = map(list, zip(*hist))
+
+        # Impressions
+        impr = list(zip(impression_news_ids, impression_catagories, impression_abstracts, impression_titles, impression_labels))
+        rng.shuffle(impr)
+        (impression_news_ids, impression_catagories, impression_abstracts,
+        impression_titles, impression_labels) = map(list, zip(*impr))
         
         history_list = []
-        for i in range(min(len(history_news_ids), 10)):
+        for i in range(min(len(history_news_ids), 20)):
             history_list.append("\"" + history_titles[i] + "\"" + " in catagory " + history_catagories[i])
 
         history_str = ''
-        for i in range(min(len(history_list),10)):
+        for i in range(min(len(history_list),20)):
             if i == 0:
                 history_str += history_list[i]
             else:

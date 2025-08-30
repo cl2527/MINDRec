@@ -260,7 +260,7 @@ def train(
             save_steps=eval_step,
             output_dir=output_dir,
             save_total_limit=3,
-            load_best_model_at_end=False,
+            load_best_model_at_end=True,
             metric_for_best_model="eval_auc",
             ddp_find_unused_parameters=False if ddp else None,
             group_by_length=group_by_length,

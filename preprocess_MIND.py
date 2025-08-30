@@ -3,20 +3,27 @@ behaviors = pd.read_csv('./raw_data/mind/MINDsmall_train/behaviors.tsv', sep='\t
 news = pd.read_csv('./raw_data/mind/MINDsmall_train/news.tsv', sep='\t', header=None, names=['news_id', 'category', 'subcategory', 'title', 'abstract', 'url', 'title_entities', 'abstract_entities'])
 
 
-train_alpha = 10 # train set negative samples undersampling rate
-val_alpha = 10 # valid set negative samples undersampling rate
-test_alpha = 10 # test set negative samples undersampling rate
+train_alpha = 20 # train set negative samples undersampling rate
+val_alpha = 20 # valid set negative samples undersampling rate
+test_alpha = 20 # test set negative samples undersampling rate
 
 
-user_alpha = 3
+user_alpha = 10 # user undersampling rate
+
+real_total_users = len(behaviors['user_id'].unique())
 
 
-tgt_fld_name = 'train_n'+str(train_alpha)+'_valid_n'+str(val_alpha)+'_test_n'+str(test_alpha)+'/'
+tgt_fld_name = 'tra_NU'+str(train_alpha)+'_val_NU'+str(val_alpha)+'_te_NU'+str(test_alpha)+'_User_'+str(real_total_users//user_alpha)
 tgt_folder_full = './data/MIND/' + tgt_fld_name + '/'
 
 tgt_train_json = tgt_folder_full + 'train.json'
 tgt_valid_json = tgt_folder_full + 'valid.json'
 tgt_test_json = tgt_folder_full + 'test.json'
+
+import os
+if not os.path.exists(tgt_folder_full):
+    os.makedirs(tgt_folder_full)
+
 
 
 news_dict = {}
@@ -27,7 +34,8 @@ news_id = {}
 
 for index, row in tqdm(news.iterrows()):
     news_dict[row['news_id']] = index
-for index, row in tqdm(behaviors.iterrows()):
+#iterate only first 1/3 of the rows below
+for index, row in tqdm(behaviors.iloc[:int(len(behaviors)/user_alpha)].iterrows()):
     userid = row['user_id']
     if not user_dict.__contains__(userid):
         user_dict[userid] = {
@@ -41,8 +49,10 @@ for index, row in tqdm(behaviors.iterrows()):
             'impression_titles': [],
             'impression_labels': [],
         }
-    if row['history'] == 'NULL':
+    hist = row.get("history", "")
+    if not isinstance(hist, str):
         continue
+
     histories = row['history'].split(' ')
     for history_news_id in histories:
         news_idx = news_dict[history_news_id]
@@ -54,6 +64,9 @@ for index, row in tqdm(behaviors.iterrows()):
         user_dict[userid]['history_titles'].append(news_title)
         user_dict[userid]['history_abstracts'].append(news_abstract)
     if row['impressions'] == 'NULL':
+        continue
+    imp = row.get("impressions", "")
+    if not isinstance(imp, str):
         continue
     impressions = row['impressions'].split(' ')
     for impression in impressions:
@@ -71,23 +84,19 @@ for index, row in tqdm(behaviors.iterrows()):
         
 new_user_dict = {}
 for key in user_dict.keys():
-    if len(user_dict[key]['historys'])  <= 5:
+    if len(user_dict[key]['history_news_ids'])  <= 5:
         pass
     else:
         new_user_dict[key] = user_dict[key]
-        print(user_dict[key])
 
 import random
 import json
 
 total_users = len(new_user_dict)
 print('total users:', total_users)
-used_users = int(total_users / user_alpha)
-print('used users:', used_users)
 
 user_list = list(new_user_dict.keys())
 random.shuffle(user_list)
-user_list = user_list[:used_users]
 train_user = user_list[:int(len(user_list) * 0.8)]
 valid_user = user_list[int(len(user_list) * 0.8):int(len(user_list) * 0.9)]
 test_user = user_list[int(len(user_list) * 0.9):]
@@ -103,9 +112,10 @@ print('num test users:', num_test_user)
 
 def generate_json(user_list, output_json, split = 'train'):
     Prompt_json = []
-    positive_list = []
-    negative_list = []
-    for user in user_list:
+
+    for user in tqdm(user_list):
+        positive_list = []
+        negative_list = []
         history_news_ids = user_dict[user]['history_news_ids']
         history_titles = user_dict[user]['history_titles']
         history_catagories = user_dict[user]['history_catagories']
@@ -133,7 +143,7 @@ def generate_json(user_list, output_json, split = 'train'):
         
         history_list = []
         for i in range(min(len(history_news_ids), 10)):
-            history_list.append("\"" + history_news_ids[i] + "\"" + " in catagory " + history_catagories[i])
+            history_list.append("\"" + history_titles[i] + "\"" + " in catagory " + history_catagories[i])
 
         history_str = ''
         for i in range(min(len(history_list),10)):
@@ -141,14 +151,12 @@ def generate_json(user_list, output_json, split = 'train'):
                 history_str += history_list[i]
             else:
                 history_str += ", " + history_list[i]
-        print('user id:', user)
-        print('history:', history_str)
-                
+        #print('user id:', user)
+        #print('history:', history_str)
         for i in range(len(impression_news_ids)):
             target_preference_str = "Yes." if impression_labels[i] == 1 else "No."
             target_news_str = "\"" + impression_titles[i] + "\"" + " in catagory " + impression_catagories[i]
-            print('target news:', target_news_str)
-            print('target preference:', target_preference_str)
+
             if impression_labels[i] == 1:
                 positive_list.append({
                     "history_str": history_str,
@@ -156,8 +164,6 @@ def generate_json(user_list, output_json, split = 'train'):
                     "target_preference_str": target_preference_str,
                 })
             else:
-                print('target news:', target_news_str)
-                print('target preference:', target_preference_str)
                 negative_list.append({
                     "history_str": history_str,
                     "target_news_str": target_news_str,
@@ -173,7 +179,6 @@ def generate_json(user_list, output_json, split = 'train'):
         
         random.seed(42)
         random.shuffle(negative_list)
-            
         for item in negative_list:
             if split == 'train':
                 prob = random.random()
@@ -198,10 +203,10 @@ def generate_json(user_list, output_json, split = 'train'):
     with open(output_json, 'w') as f:
         json.dump(Prompt_json, f, indent=4)
 
-
-generate_json(train_user, tgt_train_json, split='train')
 generate_json(valid_user, tgt_valid_json, split='valid')
 generate_json(test_user, tgt_test_json, split='test')
+generate_json(train_user, tgt_train_json, split='train')
+
 
 
 """

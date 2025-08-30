@@ -19,10 +19,10 @@ do
                     --val_data_path $val_data \
                     --output_dir ${output_dir}_${seed}_${sample}_${lr}\
                     --batch_size 128 \
-                    --micro_batch_size 32 \
+                    --micro_batch_size 16 \
                     --num_epochs 200 \
                     --learning_rate $lr \
-                    --cutoff_len 2048 \
+                    --cutoff_len 1024 \
                     --lora_r 8 \
                     --lora_alpha 16\
                     --lora_dropout $dropout \

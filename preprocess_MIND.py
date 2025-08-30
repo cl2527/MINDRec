@@ -14,7 +14,7 @@ real_total_users = len(behaviors['user_id'].unique())
 
 
 tgt_fld_name = 'tra_NU'+str(train_alpha)+'_val_NU'+str(val_alpha)+'_te_NU'+str(test_alpha)+'_User_'+str(real_total_users//user_alpha)
-tgt_folder_full = './data/MIND_20/' + tgt_fld_name + '/'
+tgt_folder_full = './data/MIND_10/' + tgt_fld_name + '/'
 
 tgt_train_json = tgt_folder_full + 'train.json'
 tgt_valid_json = tgt_folder_full + 'valid.json'
@@ -140,11 +140,11 @@ def generate_json(user_list, output_json, split = 'train'):
         impression_titles, impression_labels) = map(list, zip(*impr))
         
         history_list = []
-        for i in range(min(len(history_news_ids), 20)):
+        for i in range(min(len(history_news_ids), 10)):
             history_list.append("\"" + history_titles[i] + "\"" + " in catagory " + history_catagories[i])
 
         history_str = ''
-        for i in range(min(len(history_list),20)):
+        for i in range(min(len(history_list),10)):
             if i == 0:
                 history_str += history_list[i]
             else:

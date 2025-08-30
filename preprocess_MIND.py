@@ -51,7 +51,7 @@ for index, row in tqdm(behaviors.iterrows()):
         user_dict[userid]['impression_catagories'].append(news_catagory)
         user_dict[userid]['impression_abstracts'].append(news_abstract)
         
-    
+        
 new_user_dict = {}
 for key in user_dict.keys():
     if len(user_dict[key]['historys'])  <= 5:
@@ -62,11 +62,13 @@ for key in user_dict.keys():
 
 import random
 import json
+
 user_list = list(new_user_dict.keys())
 random.shuffle(user_list)
 train_user = user_list[:int(len(user_list) * 0.8)]
 valid_usser = user_list[int(len(user_list) * 0.8):int(len(user_list) * 0.9)]
 test_user = user_list[int(len(user_list) * 0.9):]
+
 
 def generate_json(user_list, output_json):
     Prompt_json = []
@@ -106,9 +108,9 @@ def generate_json(user_list, output_json):
                 history_str += history_list[i]
             else:
                 history_str += ", " + history_list[i]
-        
+
         for i in range(min(len(impression_news_ids), 10)):
- 
+            
             target_preference_str = "Yes." if impression_labels[i] == 1 else "No."
             target_news_str = "\"" + impression_titles[i] + "\"" + " in catagory " + impression_catagories[i]
             Prompt_json.append({
@@ -116,8 +118,12 @@ def generate_json(user_list, output_json):
                 "input": f"User History: {history_str}\nWhether the user will click the target news {target_news_str}?",
                 "output": target_preference_str,
             })
+            
+
+
     with open(output_json, 'w') as f:
         json.dump(Prompt_json, f, indent=4)
+        
 
 generate_json(train_user, './data/MIND/train.json')
 generate_json(valid_usser, './data/MIND/valid.json')

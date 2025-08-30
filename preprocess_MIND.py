@@ -92,6 +92,13 @@ train_user = user_list[:int(len(user_list) * 0.8)]
 valid_user = user_list[int(len(user_list) * 0.8):int(len(user_list) * 0.9)]
 test_user = user_list[int(len(user_list) * 0.9):]
 
+num_train_user = len(train_user)
+num_valid_user = len(valid_user)
+num_test_user = len(test_user)
+print('num train users:', num_train_user)
+print('num validation users:', num_valid_user)
+print('num test users:', num_test_user)
+
 
 
 def generate_json(user_list, output_json, split = 'train'):

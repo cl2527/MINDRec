@@ -307,7 +307,7 @@ def train(
                 pos = int(rel.sum())
                 if pos == 0:
                     continue
-                # LOCAL order (0..n-1), not global indices
+                # LOCAL order (0..n-1),
                 local_order = np.argsort(-scores[idx], kind="mergesort")
                 topk_local = local_order[: min(k, n)]
                 hits = int(rel[topk_local].sum())
@@ -361,7 +361,6 @@ def train(
             out[f"ndcg@{k}"]   = ndcg_at_k(k)
         out["mrr"] = mrr()
 
-        # Optional global AUC
         try:
             from sklearn.metrics import roc_auc_score
             out["auc"] = float(roc_auc_score(labels, scores))

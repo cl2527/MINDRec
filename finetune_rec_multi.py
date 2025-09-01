@@ -226,22 +226,12 @@ def train(
     import numpy as np
 
     def preprocess_logits_for_metrics(logits, labels):
-        """
-        Find all positions where labels are YES/NO using argwhere.
-        Align to causal LM (use logits at t-1), extract P(YES) for each such position,
-        and return flat arrays so Trainer can concat across steps.
 
-        Returns (as "predictions" for compute_metrics):
-        probs_yes_flat: float32 [N]   - P(YES_ID) at each matched position
-        gold_yes_flat : int32   [N]   - 1 if label==YES_ID else 0
-        batch_idx_flat: int32   [N]   - which batch item each element belongs to
-        """
         with torch.no_grad():
             # logits: [B, T, V], labels: [B, T]
             B, T, V = logits.shape
             device = logits.device
 
-            # indices of all YES/NO labels -> [N, 2] with columns [batch_idx, time_idx]
             idx = torch.argwhere((labels == YES_ID) | (labels == NO_ID))
             if idx.numel() == 0:
                 # nothing to score
@@ -252,10 +242,8 @@ def train(
             b = idx[:, 0]
             t = idx[:, 1]
 
-            # gold: 1 if YES, 0 if NO
             gold = (labels[b, t] == YES_ID).to(torch.int32)
 
-            # align to predicting logits at t-1; drop positions where t==0
             keep = t > 0
             b = b[keep]
             t = t[keep]
@@ -265,15 +253,12 @@ def train(
                 empty_i = np.empty((0,), dtype=np.int32)
                 return (empty, empty_i, empty_i)
 
-            # select raw logits at [b, t-1] -> [N, V]
             sel = logits[b, t - 1, :]  # raw (pre-softmax)
 
-            # take the two target vocab columns and softmax once -> [N, 2]
             cols = torch.tensor([NO_ID, YES_ID], device=sel.device)
             two = sel.index_select(dim=1, index=cols)
             probs_yes = two.softmax(dim=1)[:, 1]  # P(YES_ID) -> [N]
 
-            # flatten to numpy for Trainer concatenation
             return (
                 probs_yes.detach().cpu().numpy().astype(np.float32),
                 gold.detach().cpu().numpy().astype(np.int32),
@@ -282,10 +267,7 @@ def train(
 
 
     def compute_metrics(eval_preds):
-        """
-        eval_preds[0] is the tuple returned above (probs_yes_flat, gold_yes_flat, batch_idx_flat).
-        Compute mean recall@5 across sequences that contain at least one positive.
-        """
+
         (probs_flat, gold_flat, batch_idx_flat), _ = eval_preds
 
         if len(probs_flat) == 0:
@@ -303,10 +285,9 @@ def train(
 
             pos = np.flatnonzero(g == 1)
             if pos.size == 0:
-                continue  # skip sequences with no positives
+                continue  
 
             k = min(K, s.size)
-            # top-k indices by score (unordered but good for membership)
             topk_idx = np.argpartition(-s, k - 1)[:k]
             hits = np.intersect1d(topk_idx, pos).size
             recalls.append(hits / pos.size)

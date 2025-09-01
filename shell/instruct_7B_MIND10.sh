@@ -1,16 +1,16 @@
 echo $1, $2
 seed=$2
-output_dir='results/MIND_10'
+output_dir='results/MIND_10/tra_NU30_val_NU30_te_NU30_User_2500/re'
 base_model='baffo32/decapoda-research-llama-7B-hf'
-train_data='data/MIND_10/tra_NU20_val_NU20_te_NU20_User_2500/train.json'
-val_data='data/MIND_10/tra_NU20_val_NU20_te_NU20_User_2500/valid.json'
+train_data='data/MIND_10/tra_NU30_val_NU30_te_NU30_User_2500/train.json'
+val_data='data/MIND_10/tra_NU30_val_NU30_te_NU30_User_2500/valid.json'
 instruction_model=XXX
 for lr in 1e-4 2e-5 5e-5;
 do
     for dropout in 0.05;
     do
         for sample in 64 128 256;
-        do
+        do 
                 mkdir -p $output_dir
                 echo "lr: $lr, dropout: $dropout , seed: $seed, sample: $sample"
                 CUDA_VISIBLE_DEVICES=$1 python -u finetune_rec.py \

@@ -49,7 +49,7 @@ def train(
         "v_proj",
     ],
     # llm hyperparams
-    train_on_inputs: bool = True,  # if False, masks out inputs in loss
+    train_on_inputs: bool = False,  # if False, masks out inputs in loss
     group_by_length: bool = False,  # faster, but produces an odd training loss curve
     # wandb params
     wandb_project: str = "",
@@ -114,7 +114,7 @@ def train(
         load_in_8bit=True,
         torch_dtype=torch.float16,
         device_map=device_map,
-    )
+    ) 
 
     tokenizer = LlamaTokenizer.from_pretrained(base_model)
 
@@ -142,7 +142,8 @@ def train(
             result["attention_mask"].append(1)
 
         result["labels"] = result["input_ids"].copy()
-
+        
+        
         return result
  
     def generate_and_tokenize_prompt(data_point):
@@ -235,12 +236,14 @@ def train(
 
     os.environ["WANDB_DISABLED"] = "true"
     
+    eval_step = 4
+    """
     if sample > -1:
         if sample <= 128 :
-            eval_step = 10
+            eval_step = 1
         else:
             eval_step = sample / 128 * 5
-    
+    """
     trainer = transformers.Trainer(
         model=model,
         train_dataset=train_data,
@@ -260,7 +263,7 @@ def train(
             save_steps=eval_step,
             output_dir=output_dir,
             save_total_limit=3,
-            load_best_model_at_end=True,
+            load_best_model_at_end=False,
             metric_for_best_model="eval_auc",
             ddp_find_unused_parameters=False if ddp else None,
             group_by_length=group_by_length,
@@ -274,7 +277,7 @@ def train(
         ),
         compute_metrics=compute_metrics,
         preprocess_logits_for_metrics=preprocess_logits_for_metrics,
-        callbacks = [EarlyStoppingCallback(early_stopping_patience=10)]
+        #callbacks = [EarlyStoppingCallback(early_stopping_patience=10)]
     )
     model.config.use_cache = False
 
@@ -288,6 +291,12 @@ def train(
     """
     if torch.__version__ >= "2" and sys.platform != "win32":
         model = torch.compile(model)
+
+    print('evaluation before training')
+    metrics0 = trainer.evaluate(metric_key_prefix="eval")
+    metrics0["epoch"] = 0.0
+    trainer.log(metrics0)          # logs to state.log_history and any reporters
+    trainer.save_metrics("eval_init", metrics0)  # writes to output_dir
 
     trainer.train(resume_from_checkpoint=resume_from_checkpoint)
 

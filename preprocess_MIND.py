@@ -1,30 +1,39 @@
 import pandas as pd
-behaviors = pd.read_csv('./raw_data/mind/MINDsmall_train/behaviors.tsv', sep='\t', header=None, names=['impression_id', 'user_id', 'time', 'history', 'impressions'])
-news = pd.read_csv('./raw_data/mind/MINDsmall_train/news.tsv', sep='\t', header=None, names=['news_id', 'category', 'subcategory', 'title', 'abstract', 'url', 'title_entities', 'abstract_entities'])
 
 
-train_alpha = 20 # train set negative samples undersampling rate
-val_alpha = 20 # valid set negative samples undersampling rate
-test_alpha = 20 # test set negative samples undersampling rate
+split = "test"
 
+if split == "train":
+    behaviors = pd.read_csv('./raw_data/mind/MINDsmall_train/behaviors.tsv', sep='\t', header=None, names=['impression_id', 'user_id', 'time', 'history', 'impressions'])
+    news = pd.read_csv('./raw_data/mind/MINDsmall_train/news.tsv', sep='\t', header=None, names=['news_id', 'category', 'subcategory', 'title', 'abstract', 'url', 'title_entities', 'abstract_entities'])
+else:
+    behaviors = pd.read_csv('./raw_data/mind/MINDsmall_dev/behaviors.tsv', sep='\t', header=None, names=['impression_id', 'user_id', 'time', 'history', 'impressions'])
+    news = pd.read_csv('./raw_data/mind/MINDsmall_dev/news.tsv', sep='\t', header=None, names=['news_id', 'category', 'subcategory', 'title', 'abstract', 'url', 'title_entities', 'abstract_entities'])
 
-user_alpha = 20 # user undersampling rate
+train_alpha = 10 # train set negative samples undersampling rate
+val_alpha = 1 # valid set negative samples undersampling rate
+test_alpha = 1# test set negative samples undersampling rate0
+
+num_history = 10
+
+hist_len_cap = 30 # user undersampling rate
 
 real_total_users = len(behaviors['user_id'].unique())
 
+tgt_fld_name = 'tra_NU'+str(train_alpha)+'_val_NU'+str(val_alpha)+'_te_NU'+str(test_alpha)+'_histLen_'+str(hist_len_cap)
+tgt_folder_full = './data/MIND_30cap/' + tgt_fld_name + '/'
 
-tgt_fld_name = 'tra_NU'+str(train_alpha)+'_val_NU'+str(val_alpha)+'_te_NU'+str(test_alpha)+'_User_'+str(real_total_users//user_alpha)
-tgt_folder_full = './data/MIND_10/' + tgt_fld_name + '/'
 
-tgt_train_json = tgt_folder_full + 'train.json'
-tgt_valid_json = tgt_folder_full + 'valid.json'
-tgt_test_json = tgt_folder_full + 'test.json'
+if split == "train":
+    tgt_json = tgt_folder_full + 'train.json'
+elif split == "valid":
+    tgt_json = tgt_folder_full + 'valid.json'
+else:
+    tgt_json = tgt_folder_full + 'test.json'
 
 import os
 if not os.path.exists(tgt_folder_full):
     os.makedirs(tgt_folder_full)
-
-
 
 news_dict = {}
 
@@ -35,7 +44,15 @@ news_id = {}
 for index, row in tqdm(news.iterrows()):
     news_dict[row['news_id']] = index
 #iterate only first 1/3 of the rows below
-for index, row in tqdm(behaviors.iloc[:int(len(behaviors)/user_alpha)].iterrows()):
+
+if split == "train":
+    indices = list(range(0, int(len(behaviors)//10)))
+elif split == "valid":
+    indices = list(range(0, int(len(behaviors)//50)))
+else:
+    indices = list(range(int(len(behaviors)//50), int(len(behaviors)//50)*2))
+    
+for index, row in tqdm(behaviors.iloc[indices].iterrows()):
     userid = row['user_id']
     if not user_dict.__contains__(userid):
         user_dict[userid] = {
@@ -84,9 +101,7 @@ for index, row in tqdm(behaviors.iloc[:int(len(behaviors)/user_alpha)].iterrows(
         
 new_user_dict = {}
 for key in user_dict.keys():
-    if len(user_dict[key]['history_news_ids'])  <= 5:
-        pass
-    else:
+    if 5 < len(user_dict[key]['history_news_ids']) <= hist_len_cap and 5 < len(user_dict[key]['impression_news_ids']):
         new_user_dict[key] = user_dict[key]
 
 import random
@@ -94,19 +109,6 @@ import json
 
 total_users = len(new_user_dict)
 print('total users:', total_users)
-
-user_list = list(new_user_dict.keys())
-random.shuffle(user_list)
-train_user = user_list[:int(len(user_list) * 0.8)]
-valid_user = user_list[int(len(user_list) * 0.8):int(len(user_list) * 0.9)]
-test_user = user_list[int(len(user_list) * 0.9):]
-
-num_train_user = len(train_user)
-num_valid_user = len(valid_user)
-num_test_user = len(test_user)
-print('num train users:', num_train_user)
-print('num validation users:', num_valid_user)
-print('num test users:', num_test_user)
 
 
 
@@ -129,10 +131,12 @@ def generate_json(user_list, output_json, split = 'train'):
         rng = random.Random(42)
 
         # History
+        """
         hist = list(zip(history_news_ids, history_titles, history_catagories, history_abstracts))
         rng.shuffle(hist)
         history_news_ids, history_titles, history_catagories, history_abstracts = map(list, zip(*hist))
-
+        """
+        
         # Impressions
         impr = list(zip(impression_news_ids, impression_catagories, impression_abstracts, impression_titles, impression_labels))
         rng.shuffle(impr)
@@ -140,11 +144,11 @@ def generate_json(user_list, output_json, split = 'train'):
         impression_titles, impression_labels) = map(list, zip(*impr))
         
         history_list = []
-        for i in range(min(len(history_news_ids), 10)):
-            history_list.append("\"" + history_titles[i] + "\"" + " in catagory " + history_catagories[i])
+        for i in range(len(history_news_ids)):
+            history_list.append("\"" + history_titles[i] + "\"" + " in " + history_catagories[i])
 
         history_str = ''
-        for i in range(min(len(history_list),10)):
+        for i in range(len(history_list)):
             if i == 0:
                 history_str += history_list[i]
             else:
@@ -153,7 +157,7 @@ def generate_json(user_list, output_json, split = 'train'):
         #print('history:', history_str)
         for i in range(len(impression_news_ids)):
             target_preference_str = "Yes." if impression_labels[i] == 1 else "No."
-            target_news_str = "\"" + impression_titles[i] + "\"" + " in catagory " + impression_catagories[i]
+            target_news_str = "\"" + impression_titles[i] + "\"" + " in " + impression_catagories[i]
 
             if impression_labels[i] == 1:
                 positive_list.append({
@@ -170,9 +174,10 @@ def generate_json(user_list, output_json, split = 'train'):
 
         for item in positive_list:
             Prompt_json.append({
-                "instruction": "Given the user's history, identify whether the user will click the target news by answering \"Yes.\" or \"No.\".",
-                "input": f"User History: {item['history_str']}\nWhether the user will click the target news {item['target_news_str']}?",
+                "instruction": "Given the user's click history in chronical order, identify whether the user will click the target news by answering \"Yes.\" or \"No.\".",
+                "input": f"User's click History: {item['history_str']}\nWhether the user will click the target news in next impression {item['target_news_str']}?",
                 "output": item['target_preference_str'],
+                "user_id": user,
             })
         
         random.seed(42)
@@ -192,76 +197,15 @@ def generate_json(user_list, output_json, split = 'train'):
                     continue
             
             Prompt_json.append({
-                "instruction": "Given the user's history, identify whether the user will click the target news by answering \"Yes.\" or \"No.\".",
-                "input": f"User History: {item['history_str']}\nWhether the user will click the target news {item['target_news_str']}?",
+                "instruction": "Given the user's click history in chronical order, identify whether the user will click the target news by answering \"Yes.\" or \"No.\".",
+                "input": f"User's click History: {item['history_str']}\nWhether the user will click the target news in next impression {item['target_news_str']}?",
                 "output": item['target_preference_str'],
+                "user_id": user,
             })
 
 
     with open(output_json, 'w') as f:
         json.dump(Prompt_json, f, indent=4)
 
-generate_json(valid_user, tgt_valid_json, split='valid')
-generate_json(test_user, tgt_test_json, split='test')
-generate_json(train_user, tgt_train_json, split='train')
+generate_json(new_user_dict, tgt_json, split=split)
 
-
-
-"""
-def generate_json(user_list, output_json):
-    Prompt_json = []
-    for user in user_list:
-        history_news_ids = user_dict[user]['history_news_ids']
-        history_titles = user_dict[user]['history_titles']
-        history_catagories = user_dict[user]['history_catagories']
-        history_abstracts = user_dict[user]['history_abstracts']
-        impression_news_ids = user_dict[user]['impression_news_ids']
-        impression_catagories = user_dict[user]['impression_catagories']
-        impression_abstracts = user_dict[user]['impression_abstracts']
-        impression_titles = user_dict[user]['impression_titles']
-        impression_labels = user_dict[user]['impression_labels']
-
-        random.seed(42)
-        random.shuffle(history_news_ids)
-        random.seed(42)
-        random.shuffle(history_titles)
-        random.seed(42)
-        random.shuffle(history_catagories)
-        random.seed(42)
-        random.shuffle(impression_news_ids)
-        random.seed(42)
-        random.shuffle(impression_catagories)
-        random.seed(42)
-        random.shuffle(impression_titles)
-        random.seed(42)
-        random.shuffle(impression_labels)
-        
-        history_list = []
-        for i in range(min(len(history_news_ids), 10)):
-            history_list.append("\"" + history_news_ids[i] + "\"" + " in catagory " + history_catagories[i])
-
-        history_str = ''
-        for i in range(min(len(history_list),10)):
-            if i == 0:
-                history_str += history_list[i]
-            else:
-                history_str += ", " + history_list[i]
-
-        for i in range(min(len(impression_news_ids), 10)):
-            
-            target_preference_str = "Yes." if impression_labels[i] == 1 else "No."
-            target_news_str = "\"" + impression_titles[i] + "\"" + " in catagory " + impression_catagories[i]
-            Prompt_json.append({
-                "instruction": "Given the user's history, identify whether the user will click the target news by answering \"Yes.\" or \"No.\".",
-                "input": f"User History: {history_str}\nWhether the user will click the target news {target_news_str}?",
-                "output": target_preference_str,
-            })
-            
-    with open(output_json, 'w') as f:
-        json.dump(Prompt_json, f, indent=4)
-        
-
-generate_json(train_user, './data/MIND/train.json')
-generate_json(valid_usser, './data/MIND/valid.json')
-generate_json(test_user, './data/MIND/test.json')
-"""

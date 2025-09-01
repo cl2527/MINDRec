@@ -4,10 +4,6 @@ export KAGGLE_KEY=YOUR_API_KEY
 
 kaggle datasets download -d arashnic/mind-news-dataset -p raw_data/mind --unzip
 
-#
-TALLRec: Only single GPU! Efficient tuning framework to align Large Language Models with recommendation data
-
-https://medium.com/@ichigo.v.gen12/tallrec-only-single-gpu-efficient-tuning-framework-to-align-llm-with-recommendation-data-5a8a8dba4874
 
 # For deepseek R1 distilled:
 
@@ -28,5 +24,3 @@ python -m pip install --no-cache-dir "bitsandbytes==0.43.3"
 
 ![alt text](image.png)
 
-" Yes" -- 3869
-" No" -- 1939

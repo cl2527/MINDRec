@@ -11,6 +11,7 @@ kaggle datasets download -d arashnic/mind-news-dataset -p raw_data/mind --unzip
 model_id = "deepseek-ai/DeepSeek-R1-Distill-Llama-8B"
 
 # Troubleshooting version incompability (for cuda version 12.X)
+pip install -r requirements2.txt
 
 python -m pip uninstall -y bitsandbytes triton torch torchvision torchaudio
 

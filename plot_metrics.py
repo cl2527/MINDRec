@@ -12,7 +12,7 @@ result_root_dir = './results/MIND_30cap/tra_NU10_val_NU1_te_NU1_histLen_30/re_42
 #epoch_0_state_json = './results/MIND_30cap/tra_NU10_val_NU1_te_NU1_histLen_30/re_42_2048_1e-4/all_results.json'
 #log_history_jason = './results/MIND_30cap/tra_NU10_val_NU1_te_NU1_histLen_30/re_42_2048_1e-4/checkpoint-76/trainer_state.json'
 epoch_0_state_json = os.path.join(result_root_dir, 'all_results.json')
-log_history_jason = os.path.join(result_root_dir, 'checkpoint-76', 'trainer_state.json')
+log_history_jason = os.path.join(result_root_dir, 'checkpoint-112', 'trainer_state.json')
 epoch = []
 auc = []
 mrr = []
@@ -60,6 +60,6 @@ plt.ylabel('Score')
 plt.title('Evaluation Metrics ')
 plt.legend()
 plt.grid()
-plt.savefig(os.path.join(tgt_folder, 'metrics.png'))
+plt.savefig(os.path.join(tgt_folder, 'metrics_112.png'))
 plt.close()
 

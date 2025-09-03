@@ -24,3 +24,7 @@ python -m pip install --no-cache-dir "bitsandbytes==0.43.3"
 
 ![alt text](image-1.png)
 
+AUC improved by 40.00%, from 0.4641 to 0.6497
+MRR improved by 57.19%, from 0.2190 to 0.3443
+NDCG@5 improved by 68.63%, from 0.1652 to 0.2787
+Recall@5 improved by 37.96%, from 0.2212 to 0.3052

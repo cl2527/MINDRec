@@ -45,6 +45,10 @@ improve_auc = (max(auc) - auc[0]) / auc[0] * 100
 improve_mrr = (max(mrr) - mrr[0]) / mrr[0] * 100
 improve_ndcg_5 = (max(ndcg_5) - ndcg_5[0]) / ndcg_5[0] * 100
 improve_recall_5 = (max(recall_5) - recall_5[0]) / recall_5[0] * 100
+print(f'AUC improved by {improve_auc:.2f}%, from {auc[0]:.4f} to {max(auc):.4f}')
+print(f'MRR improved by {improve_mrr:.2f}%, from {mrr[0]:.4f} to {max(mrr):.4f}')
+print(f'NDCG@5 improved by {improve_ndcg_5:.2f}%, from {ndcg_5[0]:.4f} to {max(ndcg_5):.4f}')
+print(f'Recall@5 improved by {improve_recall_5:.2f}%, from {recall_5[0]:.4f} to {max(recall_5):.4f}')
 
 plt.figure()
 plt.plot(epoch, auc, label='AUC')

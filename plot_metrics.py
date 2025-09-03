@@ -39,6 +39,12 @@ with open(log_history_jason, 'r') as f:
         ndcg_5.append(log['eval_ndcg@5'])
         recall_5.append(log['eval_recall@5'])
         epoch.append(log['epoch'])
+        
+        
+improve_auc = (max(auc) - auc[0]) / auc[0] * 100
+improve_mrr = (max(mrr) - mrr[0]) / mrr[0] * 100
+improve_ndcg_5 = (max(ndcg_5) - ndcg_5[0]) / ndcg_5[0] * 100
+improve_recall_5 = (max(recall_5) - recall_5[0]) / recall_5[0] * 100
 
 plt.figure()
 plt.plot(epoch, auc, label='AUC')
